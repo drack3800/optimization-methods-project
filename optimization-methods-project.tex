@@ -1,0 +1,259 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage[hidelinks, pagebackref]{hyperref}
+\hypersetup{
+    colorlinks=false
+}
+\usepackage{chngcntr}
+\counterwithin*{equation}{section}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Теорема}[section]
+
+\theoremstyle{definition}
+\newtheorem{defn}{Определение}[section]
+\newtheorem{example}{Пример}[section]
+
+
+\DeclareMathOperator{\grad}{grad}
+\DeclareMathOperator{\proj}{proj}
+
+\begin{document}
+
+\pagestyle{empty}
+\pagenumbering{gobble}
+
+\title{Методы возможных направлений в задачах условной оптимизации}
+\author{Персиянов Дмитрий, ФИВТ, 397 группа}
+\date{Май, 2015}
+\maketitle
+
+\tableofcontents
+
+\cleardoublepage
+\pagestyle{headings}
+\pagenumbering{arabic}
+
+\section{Введение}
+
+Мы рассматриваем задачу минимизации гладкой функции $f(x)$ на заданном множестве $X \subseteq \mathbb{R}^n$.
+\textit{Методы возможных направлений} -- это класс итерационных методов решения такой задачи, где на каждом шаге переход к новому приближению $x_k$ осуществляется с помощью выбора так называемого возможного направления убывания функции.
+
+\begin{defn}
+Пусть $X \subseteq \mathbb{R}^n,~x\in X$. Вектор $e \in \mathbb{R}^n,~ e \neq 0$ называется \textit{возможным направлением} в точке $x \in X$, если $\exists ~t_0 > 0 \text{ т.ч. } \forall ~0<t\leqslant t_0 \rightarrow x+te \in X$.
+\end{defn}
+
+\begin{defn}
+Вектор $e \neq 0$ называется \textit{возможным направлением убывания} функции $f(x)$ в точке $x$ на множестве $X$, если $e$ -- возможное направление в точке $x$ и $\exists~0 < \beta \leqslant t_0 \text{ т.ч. } \forall ~0 < \alpha < \beta \rightarrow f(x+\alpha e) < f(x)$.
+\end{defn}
+
+Итак, идея методов проста. На каждом шаге находим возможное направление убывания $e$ функции $f(x)$, и ищем новое приближение по формуле $x_k = x_{k-1} + \alpha_k e$, где $\alpha_k$ -- некоторый положительный шаг.
+
+\paragraph{Примеры.}
+\begin{enumerate}
+\item \textbf{Градиентный спуск}
+
+Пусть $X = \mathbb{R}^n$. Т.к. функция $f(x)$ непрерывно дифференцируема на $X$, то в любой точке $x \in X$ существует градиент $\grad f(x)$ и
+\begin{equation}
+\label{diff}
+f(x+h)-f(x)=\langle \grad f(x), h\rangle + o(h)
+\end{equation}
+По неравенству Коши-Буняковского
+\begin{equation*}
+\label{cauchey-bunyak}
+-|\grad f(x)|\cdot |h|\leqslant\langle\grad f(x), h\rangle\leqslant |\grad f(x)|\cdot |h|
+\end{equation*}
+Левое равенство достигается при $h = -\grad f(x)$, а так как при достаточно малых $|h|$ значение $f(x+h)-f(x)$ определяется членом $\langle \grad f(x), h\rangle$, то можно взять $-\grad f(x)$ в качестве возможного направления убывания функции $f(x)$ в точке $x$. Итоговое выражение для перехода:
+\begin{equation}
+x_k = x_{k-1} - \alpha_k\cdot\grad f(x)
+\end{equation}
+
+Стоит сказать, что градиентный спуск при приближении $x_k$ к минимуму $x_*$, начинает плохо работать. Это связано с тем, что в окрестности точки минимума $x_*$ градиент $\grad f(x_k)$ мало отличим от нуля, а значит квадратичная часть приращения начинает иметь большее влияние (см. выражение $\eqref{diff}$) и метод становится чувствительным к погрешностям вычислений.
+
+Отдельно стоит говорить о выборе длины шага $\alpha_k$. Мы не будем на этом останавливаться, сказав, что в большинстве практических задач его берут фиксированным для всех итераций (подробнее см. \cite[p.~276]{vasilyev}).
+
+\item \textbf{Метод проекции градиента}
+
+Теперь не обязательно $X = \mathbb{R}^n$. Действовать, как при градиентном спуске, теперь нельзя, потому что при каком-то $k$ $x_k$ может не принадлежать $X$. Новое выражение для $x_k$ будет следующим:
+\begin{equation}
+x_k = \proj_X \big(x_{k-1}+\alpha_k\cdot\grad f(x)\big),
+\end{equation} где $\proj_X(y)=\inf_{x\in X} |y-x|,~y\in\mathbb{R}^n$ -- проекция точки $y$ на множество $X$. Если $X$ - выпукло и замкнуто, то проекция определена однозначно. В этом методе нужно уметь вычислять проекцию на множество $X$, что вообще говоря, не всегда просто сделать. Но для некоторых структур $X$ формулу для проекции можно выписать явно. Подробнее см. \cite[p.~293]{vasilyev}.
+\end{enumerate}
+
+Для эффективности метода необходимо уметь быстро вычислять возможное направление убывания и переходить от старого приближения к новому. Далее мы перейдём к общей теории и рассмотрим методы выбора возможных направлений, которые просто и удобно можно реализовать на компьютере.
+
+\section{Общий подход}
+Рассмотрим задачу
+\begin{equation}
+\label{problem}
+f(x) \rightarrow \inf,\quad x \in X=\lbrace x \in \mathbb{R}^n : g_i(x)\leqslant 0, i=\overline{1,m}\rbrace,
+\end{equation} где функции $f(x), g_i(x), i=\overline{1,m}\,$ определены на всём $\mathbb{R}^n$ и непрерывно дифференцируемы на $X$.
+
+Пусть $x_0 \in X$ -- некоторое начальное приближение. Мы хотим научиться делать переход от старого приближения к новому. Для этого мы сейчас рассмотрим вспомогательную задачу, являющуюся задачей линейного программирования. Решение этой задачи будет давать нам возможное направление убывания функции.
+\subsection{Вспомогательная задача и поиск возможного направления убывания f(x)}
+Итак, пусть дано $k$-е приближение $x_k$. Введём так называемое множество индексов \textit{активных ограничений}:
+\begin{equation*}
+I_k = \lbrace i:1\leqslant i \leqslant m, g_i(x_k)=0\rbrace
+\end{equation*}
+Вспомогательная задача формулируется следующим образом:
+\begin{multline}
+\label{help_problem}
+\sigma \rightarrow \inf,\quad z=(e, \sigma)=(e^1,\ldots,e^n,\sigma)\in W_k, \\
+W_k = \lbrace (e,\sigma) \in \mathbb{R}^{n+1}: \langle \grad f(x_k), e \rangle \leqslant \sigma,\\
+ \langle \grad g_i(x_k), e \rangle \leqslant \sigma, i \in I_k; |e^j| \leqslant 1, j=\overline{1,n} \rbrace   
+\end{multline}
+Из определения $W_k$ видно, что это задача линейного программирования. Поймём, что она имеет решение. Видно, что $z=(0,0) \in W_k \Rightarrow \inf_{W_k}\sigma = \sigma_k \leqslant 0$. Далее, множество $W_k$ -- полиэдр, ибо оно замкнуто, ограничено и задается линейными ограничениями. Значит, по т. Вейерштрасса, задача $\eqref{help_problem}$ имеет хотя бы одно решение. Искать его мы можем известными методами, например симплекс-методом.
+
+Будем считать, что мы решили задачу $\eqref{help_problem}$ и нашли $(e_k, \sigma_k)\in W_k$ т.ч. $\sigma_k=\inf_{W_k}\sigma$. Возможны два случая: $\sigma_k < 0$ и $\sigma_k = 0$. Сейчас мы поймём, что второй случай означает, что $x_k$ -- решение задачи $\eqref{help_problem}$.
+
+Итак, пусть $\sigma_k = 0$. Нам понадобятся следующие обозначения:
+$f_* = \underset{X}{\inf}f$, $X_* = \lbrace x \in X: f(x)=f_* \rbrace$.
+Также переформулируем задачу $\eqref{help_problem}$ для точки $x_* \in X_*$:
+\begin{multline}
+\label{help_for_inf}
+\sigma \rightarrow \inf,\quad z=(e, \sigma)=(e^1,\ldots,e^n,\sigma)\in W_*, \\
+W_* = \lbrace (e,\sigma) \in \mathbb{R}^{n+1}: \langle \grad f(x_*), e \rangle \leqslant \sigma,\\
+ \langle \grad g_i(x_*), e \rangle \leqslant \sigma, i \in I_*; |e^j| \leqslant 1, j=\overline{1,n} \rbrace,
+\end{multline}
+где $I_* = \lbrace 1 \leqslant i \leqslant m,\, g_i(x_*) = 0 \rbrace$.
+Для краткости далее будем вместо $\grad f(x)$ писать $f'(x)$, имея ввиду $n$-мерный вектор частных производных.
+\begin{theorem}
+\label{main_th1}
+Пусть функции $f(x), g_1(x), \ldots, g_m(x) \in C^1(X)$, а задача \eqref{problem} имеет решение, т.е. $f_* > -\infty,\, X_* \neq \varnothing$. Тогда для любой точки $x_* \in X_*$ задача $\eqref{help_for_inf}$
+необходимо имеет решение $(e_*, \sigma_*)$ с $\sigma_*=\underset{W_*}{\min\sigma}=0$.
+\end{theorem}
+Для доказательства этой теоремы сформулируем теорему из теории метода множителей Лагранжа, которую доказывать не будем.
+\begin{theorem}[Каруша-Джона]
+\label{karush-john}
+Пусть функции $f(x), g_1(x), \ldots, g_m(x) \in C^1(X)$, а задача \eqref{problem} имеет решение, т.е. $f_* > -\infty,\, X_* \neq \varnothing$. Тогда для любой точки $x_* \in X_*$ существуют множители Лагранжа $\lambda_0^*, \ldots, \lambda_m^*:$
+\begin{equation*}
+\forall i~ \lambda_i^* \geqslant 0,~ \exists i: \lambda_i^* \neq 0, \forall i~ \lambda_i^* g_i(x_*)=0,~ \mathcal{L}_x'(x_*,\lambda_0^*, \ldots, \lambda_m^*) = 0
+\end{equation*}
+\end{theorem}
+\begin{proof}[Доказательство теоремы $\ref{main_th1}$]
+По теореме $\ref{karush-john}$ находим множители Лагранжа неотрицательные и не все равные нулю, такие, что
+\begin{equation}
+\lambda_0^*f'(x_*) + \sum_{i=1}^m \lambda_i^* g_i'(x_*)=0,\quad \lambda_i^* g_i(x_*)=0,\quad i=\overline{1,m}
+\end{equation}
+Заметим, что первое равенство можно переписать в виде
+\begin{equation}
+\lambda_0^*f'(x_*) + \sum_{i\in I_*}^m \lambda_i^* g_i'(x_*)=0
+\end{equation}
+Далее, возьмём произвольную точку $(e,\sigma)\in W_*$. Тогда $\langle f'(x_*), e\rangle \leqslant \sigma, \linebreak \langle g_i'(x_*), e \rangle \leqslant \sigma, i \in I_*.$ Домножим неравенство с $f'(x_*)$ на $\lambda_0^*$, а неравенства с $g_i(x_*)$ на $\lambda_i^*$ соответственно, а затем сложим. Получим
+$\big \langle \lambda_0^*f'(x_*) + \sum_{i\in I_*}^m \lambda_i^* g_i'(x_*) \big \rangle=0\leqslant \sigma(\lambda_0^* + \ldots + \lambda_m^*)$. Следовательно, $\sigma \geqslant 0$. Но ранее мы показали, что $\sigma_* \leqslant 0$. Значит $\sigma_* = 0$.
+\end{proof}
+Оказывается, что если наша задача выпукла, то $x_k$ является её решением. На этот счёт справедлива следующая теорема.
+\begin{theorem}
+\label{main_th2_sufficient}
+В условиях теоремы $\ref{main_th1}$ пусть дополнительно выполнены следующие условия:
+\begin{enumerate}
+\item $f(x), g_i(x)$ выпуклы на $\mathbb{R}^n$.
+\item Выполнено условие Слейтера, т.е. существует точка $x' \in X \text{ т.ч. } \linebreak g_i(x') < 0 \quad\forall~i=1,\ldots,m$.
+\end{enumerate}
+Тогда любая точка $x_* \in X_*$, для которой задача $\eqref{help_for_inf}$ находит $\sigma_* = 0$, является решением задачи $\eqref{problem}$.
+\end{theorem}
+
+Таким образом, если задача выпукла, и решая вспомогательную задачу на $k$-ой итерации мы получили $\sigma_k = 0$, то это значит, что мы нашли решение $x_k$ задачи $\eqref{problem}$.
+
+Если задача невыпукла, то условие $\sigma_* = 0$ не является достаточным для оптимальности $x_*$.
+\begin{example}
+$f(x,y) = x + \cos y,~(x,y) \in X = \lbrace (x,y) \in \mathbb{R}^2:\linebreak g(x,y)=-x \leqslant 0 \rbrace$. Рассмотрим $(x_*,y_*) = (0,0)$. Очевидно, она не является точкой минимума на множестве $X$, ибо $f(0, \pi) = -1 < 0$. Однако, $f'(0,0) = (1, 0), g'(0,0)=(-1,0)$. Тогда  $W_* = \lbrace (e^1, e^2, \sigma): e^1 \leqslant \sigma, -e^1 \leqslant \sigma, |e^1| \leqslant 1, |e^2| \leqslant 1 \rbrace$. Тогда $|e^1|\leqslant\sigma ~\forall (e^1, e^2, \sigma)\in W_* \Rightarrow \sigma_* = \underset{W_*}{\inf\sigma} = 0$.
+\end{example}
+
+Теперь рассмотрим случай, когда $\sigma_k < 0$.
+Покажем, что тогда $e_k$ является возможным направлением убывания функции $f(x)$. Имеем
+\begin{equation*}
+\langle f'(x_k), e_k \rangle \leqslant \sigma_k < 0, \qquad \langle g_i'(x_k),e_k \rangle \leqslant \sigma_k < 0,\quad i \in I_k.
+\end{equation*}
+Значит, во-первых, $e_k \neq 0$, а во-вторых, для любого $i \in I_k \rightarrow g_i(x_k) = 0$ и
+\begin{multline}
+g_i(x_k+\alpha e_k) = g_i(x_k+\alpha e_k) - g_i(x_k) = \langle g_i(x_k), e_k \rangle \alpha + o(\alpha) \leqslant
+\\
+\leqslant \alpha \sigma_k + o(\alpha) = \alpha \big(\sigma_k + o(1) \big) < 0 \text{ при } 0 < \alpha < \alpha_0.
+\end{multline}
+Если $i \notin I_k$, то $g_i(x_k) < 0$. Из непрерывности $g_i(x)$ следует, что это $g_i(x_k+\alpha e_k) < 0$ при $0<\alpha<\alpha_i$. Значит,
+\begin{equation}
+g_i(x_k+\alpha e_k) < 0, \quad i = 1,\ldots,m,\quad 0<\alpha<\alpha_0
+\end{equation}
+Получили, что $e_k$ является возможным направлением множества $X$. Аналогично рассуждениям выше можем получить (при необходимости уменьшив $\alpha_0$):
+\begin{equation}
+f(x_k+\alpha e_k) - f(x_k) < 0,\quad 0 < \alpha < \alpha_0
+\end{equation}
+Таким образом, $e_k$ является возможным направлением убывания функции $f(x)$ в точке $x_k$ на множестве $X$.
+Теперь мы можем перейти к новому приближению $x_{k+1} = x_k + d_k e_k,~ 0 < d_k < \beta_k=\sup \lbrace t: x_k+te_k \in X \rbrace$.
+
+Наконец мы можем понять смысл вспомогательной задачи. Минимизируя $\sigma$, мы хотим приблизить $e_k$ как можно ближе к антиградиенту (мы знаем, что $\langle f'(x_k), h \rangle \geqslant -|f'(x_k)|^2$).
+
+Далее, поговорим о выборе шага $d_k$.
+
+\subsection{Выбор шага $d_k$ в переходе к новому приближению}
+\label{choose_step_sec}
+
+Мы остановились на том, что нашли $e_k$ -- возможное направление убывания функции $f(x)$ в точке $x_k$ на множестве $X$. Переход к новому приближению осуществляется по следующей формуле:
+\begin{equation}
+x_{k+1} = x_k + d_k e_k, \quad 0 < d_k < \beta_k=\sup \lbrace t: x_k+te_k \in X \rbrace 
+\end{equation}
+Перечислим способы выбора $d_k$.
+\begin{enumerate}
+
+\item Если градиент $f'(x)$ удовлетворяет условию Липшица на множестве $X$, т.е. $|f'(x)-f'(y)| \leqslant L|x-y|,~ x,y \in X$ для некоторой константы $L \geqslant 0$ и константа нам известна, то шагом можно взять
+\begin{equation}
+d_k =  \min(\beta_k, |\sigma_k|L^{-1})
+\end{equation}
+
+\item Можно выбирать шаг, удовлетворяющий следующему условию:
+\begin{equation}
+f(x_k) - f(x_k + d_k e_k) \geqslant \varepsilon d_k |\sigma_k|, \quad 0 < d_k \leqslant \beta_k, \quad 0 < \varepsilon < \frac{1}{2}
+\end{equation}
+Сначала положим $d_k = \beta_k$ и при необходимости будем её уменьшать.
+
+\item Если сложно вычислить $\beta_k$, то можно принять шаг равным какой-то константе $d_k = \alpha$, проверить убывание $f(x)$ и принадлежность $x_k + d_k e_k \in X$, при необходимости снова уменьшая величину шага.
+\end{enumerate}
+
+\subsection{Ухудшение сходимости при приближении к оптимуму}
+К сожалению, вышеописанный метод преследует та же проблема, что и градиентный спуск. Когда в решении вспомогательной задачи $\eqref{help_problem}$ значение $\sigma_k < 0$ близко к нулю, направление $e_k$, хоть и является теоретически возможным направлением убывания функции в точке $x_k$, на практике обладает свойством $\langle g_i'(x_k), e_k \rangle\approx\sigma_k\approx 0$ при некотором $i \in I_k$, либо $\langle f'(x_k), e_k \rangle\approx\sigma_k\approx 0$. В первом случае мы получим маленькое значение для $\beta_k$ ($\beta_k=\sup \lbrace t: x_k+te_k \in X \rbrace$), а следовательно и для длины шага тоже (см. раздел $\ref{choose_step_sec}$ о выборе шага), а во втором случае мы получим, что целевая функция $f(x)$ убывает крайне медленно вдоль направления $e_k$.
+
+Для избежания таких явлений, мы поступим следующим образом.
+
+Пусть $x_0 \in X, \varepsilon_0 > 0$ -- некоторое начальное приближение. Допустим, что $k$-е приближение $(x_k, \varepsilon_k), x_k \in X, \varepsilon_k > 0$ известно при каком-то $k$. Определим множество
+\begin{equation}
+I_k = \lbrace i: 1 \leqslant i \leqslant m,~ -\varepsilon_k \leqslant g_i(x_k) \leqslant 0 \rbrace
+\end{equation}
+и решим нашу вспомогательную задачу $\eqref{help_problem}$ для такого $I_k$. Её решение $(e_k, \sigma_k)$.
+\begin{enumerate}
+\item $\sigma_k \leqslant -\varepsilon_k$. Тогда считаем, что $e_k$ обладает выраженным свойством возможного направления убывания $f(x)$ в $x_k$ и делаем переход
+\begin{equation}
+x_{k+1} = x_k + d_k e_k,\quad 0 < d_k \leqslant \beta_k, \varepsilon_{k+1} = \varepsilon_k,
+\end{equation}
+где $\beta_k$ и шаг $d_k$ определяются так же, как и ранее.
+
+\item $-\varepsilon_k < \sigma_k \leqslant 0$. Тогда делаем такой переход
+\begin{equation}
+x_{k+1} = x_k, \quad \varepsilon_{k+1} = \frac{\varepsilon_k}{2},
+\end{equation}
+и снова решаем вспомогательную задачу для соответствующего множества $I_{k+1}$.
+Смысл этого перехода в том, что мы сузили множество $I_k$, а значит, множество $W_k$ во вспомогательной задаче расширилось, что могло дать нам новых кандидатов на возможное направление убывания.
+\end{enumerate}
+
+
+ 
+
+
+
+
+\newpage
+\begin{thebibliography}{3}
+\bibitem{vasilyev} Васильев Ф.П.: \emph{Методы оптимизации}, ч. 1, МЦНМО, 2011
+\bibitem{suhtimfed} Сухарев А.Г., Тимохов А.В., Фёдоров В.В.: \emph{Курс методов оптимизации}, Физматлит, 2005
+\bibitem{engarticle} Dianne P. O’Leary, \emph{Feasible direction methods}: \url{https://www.cs.umd.edu/users/oleary/a607/607constrfdhand.pdf}
+\end{thebibliography}
+\end{document}
+
+
+
